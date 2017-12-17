@@ -1,14 +1,14 @@
 {
   "appName": {
-    "message": "netlix-filmaffinity",
+    "message": "Filmaffinity on Netflix",
     "description": "The name of the application"
   },
   "appShortName": {
-    "message": "netflix-reviews",
+    "message": "Filmaffinity on Netflix",
     "description": "The short_name (maximum of 12 characters recommended) is a short version of the app's name."
   },
   "appDescription": {
-    "message": "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "message": "This extension shows filmaffitniy.es ratings on Nerflix",
     "description": "The description of the application"
   }
 }

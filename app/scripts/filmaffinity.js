@@ -10,13 +10,19 @@ export const BASE_URL = 'https://www.filmaffinity.com'
 
 export class FaApi {
 
-  static getRating(film) {
+  static getDetails(film) {
     return fetch(`${BASE_URL}/es/search.php?stext=${film}`)
       .then(response => {
         if (!response.redirected) {
           return response.text()
             .then(createHtml)
-            .then(body$ => FaApi._parseSearchResults(body$)[0]);
+            .then(body$ => FaApi._parseSearchResults(body$)[0])
+            .then(result => fetch(`${result.href}`))
+            .then(r => {
+              return r.text()
+                .then(createHtml)
+                .then(body$ => FaApi._parseDetails(body$, r.url));
+            });
         } else {
           return response.text()
             .then(createHtml)
@@ -41,13 +47,44 @@ export class FaApi {
   static _parseDetails(body$, href) {
     const rating$ = body$.getElementById('movie-rat-avg');
     const title$ = body$.getElementById('main-title');
+    const reviews$ = body$.querySelectorAll('.pro-review');
     return {
-      rating: parseFloat(rating$.getAttribute('content')),
+      rating: rating$ ? parseFloat(rating$.getAttribute('content')) : '-',
       href: href,
       title: title$.innerText.trim(),
+      reviews: FaApi._parseReviews(reviews$),
     };
   }
+
+  static _parseReviews(reviews$) {
+    return nlToArr(reviews$).map(review$ => {
+      const content = review$.querySelector('[itemprop="reviewBody"]').innerText;
+      const critMed = review$.querySelector('.pro-crit-med').innerText.split(':');
+      const author = critMed[0].trim();
+      const medium = critMed[1] ? critMed[1].trim() : undefined;
+      const rating$ = review$.querySelector('.fa.fa-circle');
+      const ratingClasses = rating$.classList;
+      let rating = '';
+      if (ratingClasses.contains('pos')) {
+        rating = 'positive';
+      } else if (ratingClasses.contains('neu')) {
+        rating = 'neutral';
+      } else if (ratingClasses.contains('neg')) {
+        rating = 'negative';
+      } else {
+        rating = 'none';
+      }
+      return {
+        author,
+        medium,
+        content,
+        rating,
+      };
+    })
+  }
 }
+
+
 
 export class FaNetflixDecorator {
 
@@ -58,10 +95,37 @@ export class FaNetflixDecorator {
   decorate(card) {
     this._getDetails(card.title)
       .then((details) => {
-        const overlay$ = card.element.querySelector('.bob-overlay');
-        const addon$ = this._createElement(details);
-        overlay$.appendChild(addon$);
+        try {
+          this._addFaRating(card, details);
+          this._addBoyeroRating(card, details);
+        } catch (e) {
+
+        }
       })
+  }
+
+  _addFaRating(card, details) {
+      const overlay$ = card.element.querySelector('.bob-overlay > .bob-play-hitzone');
+      const addon$ = this._createElement(details);
+      overlay$.insertBefore(addon$, overlay$.firstChild);
+  }
+
+  _addBoyeroRating(card, details) {
+    const boyero = details.reviews.find(r => r.author.indexOf('Boyero') >= 0);
+    if (!boyero) {
+     return;
+    }
+    const buttonWrapper$ = card.element.querySelector('.bob-button-wrapper');
+    const div$ = document.createElement('div');
+    div$.classList.add('nf-svg-button-wrapper');
+    div$.classList.add('filmaffinity-boyero');
+    div$.classList.add(`filmaffinity-boyero--${boyero.rating}`)
+    div$.innerHTML = `
+      <a role="link" class="nf-svg-button simpleround filmaffinity-boyero__head" role="link">
+      </a>
+      <span class="filmaffinity-boyero__tooltip nf-svg-button-tooltip" role="status" aria-live="assertive">${boyero.content}</span>
+    `;
+    buttonWrapper$.insertBefore(div$, buttonWrapper$.firstChild);
   }
 
   _createElement(details) {
@@ -73,10 +137,15 @@ export class FaNetflixDecorator {
         <span class="filmaffinity-addon__rating">${details.rating}</span>
       </a>
     `;
+    div$.getElementsByTagName('a')[0].addEventListener('click', e => {
+      e.cancelBubble = true;
+      e.stopPropagation();
+      return false;
+    })
     return div$;
   }
 
   _getDetails(title) {
-    return FaApi.getRating(title);
+    return FaApi.getDetails(title);
   }
 }

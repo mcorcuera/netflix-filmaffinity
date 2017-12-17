@@ -16,7 +16,6 @@ export class NetflixDecoratorManager {
 
   registerCardDecorator(cardDecorator) {
     if (this._cardDecorators.indexOf(cardDecorator) < 0) {
-      console.log('decorator')
       this._cardDecorators.push(cardDecorator);
     }
   }
@@ -41,7 +40,10 @@ export class NetflixDecoratorManager {
       const cards = cards$.map(this._createCardObject);
       this._cardDecorators.forEach(decorator => {
         cards.forEach(card => {
-          decorator.decorate(card);
+          try {
+            decorator.decorate(card);
+          } catch(e) {
+          }
         })
       })
     }

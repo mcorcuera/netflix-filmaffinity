@@ -2,7 +2,7 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_appShortName__",
   "description": "__MSG_appDescription__",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "manifest_version": 2,
   "default_locale": "en",
   "icons": {
@@ -14,6 +14,9 @@
       "scripts/background.js"
     ]
   },
+  "web_accessible_resources": [
+    "images/boyero-head.png"
+  ],
   "content_scripts": [
     {
       "matches": [
@@ -33,7 +36,6 @@
   "permissions": [
     "contentSettings",
     "contextMenus",
-    "input",
     "management",
     "pageCapture",
     "webNavigation",
