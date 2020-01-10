@@ -1,90 +1,15 @@
 import {
   log
 } from './logger';
-import {
-  nlToArr,
-  createHtml
-} from './utils';
 
-export const BASE_URL = 'https://www.filmaffinity.com'
 
 export class FaApi {
-
   static getDetails(film) {
-    return fetch(`${BASE_URL}/es/search.php?stext=${film}`)
-      .then(response => {
-        if (!response.redirected) {
-          return response.text()
-            .then(createHtml)
-            .then(body$ => FaApi._parseSearchResults(body$)[0])
-            .then(result => fetch(`${result.href}`))
-            .then(r => {
-              return r.text()
-                .then(createHtml)
-                .then(body$ => FaApi._parseDetails(body$, r.url));
-            });
-        } else {
-          return response.text()
-            .then(createHtml)
-            .then(body$ => FaApi._parseDetails(body$, response.url));
-        }
-      });
-  }
-
-  static _parseSearchResults(body$) {
-    return nlToArr(body$.querySelectorAll('.movie-card'))
-      .map(card$ => {
-        const title$ = card$.querySelector('.mc-title > a');
-        const rating = parseFloat(card$.querySelector('.avgrat-box').textContent.replace(',', '.'));
-        return {
-          title: title$.getAttribute('title'),
-          href: `${BASE_URL}${title$.getAttribute('href')}`,
-          rating: isNaN(rating) ? '-' : rating,
-        }
-      });
-  }
-
-  static _parseDetails(body$, href) {
-    const rating$ = body$.getElementById('movie-rat-avg');
-    const title$ = body$.getElementById('main-title');
-    const reviews$ = body$.querySelectorAll('.pro-review');
-    return {
-      rating: rating$ ? parseFloat(rating$.getAttribute('content')) : '-',
-      href: href,
-      title: title$.innerText.trim(),
-      reviews: FaApi._parseReviews(reviews$),
-    };
-  }
-
-  static _parseReviews(reviews$) {
-    return nlToArr(reviews$).map(review$ => {
-      const content = review$.querySelector('[itemprop="reviewBody"]').innerText;
-      const critMed = review$.querySelector('.pro-crit-med').innerText.split(':');
-      const author = critMed[0].trim();
-      const medium = critMed[1] ? critMed[1].trim() : undefined;
-      const rating$ = review$.querySelector('.fa.fa-circle');
-      const ratingClasses = rating$.classList;
-      let rating = '';
-      if (ratingClasses.contains('pos')) {
-        rating = 'positive';
-      } else if (ratingClasses.contains('neu')) {
-        rating = 'neutral';
-      } else if (ratingClasses.contains('neg')) {
-        rating = 'negative';
-      } else {
-        rating = 'none';
-      }
-      return {
-        author,
-        medium,
-        content,
-        rating,
-      };
-    })
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({contentScriptQuery: 'FaApi.getDetails', film: film}, resolve)
+    });
   }
 }
-
-
 
 export class FaNetflixDecorator {
 
@@ -115,7 +40,8 @@ export class FaNetflixDecorator {
     if (!boyero) {
      return;
     }
-    const buttonWrapper$ = card.element.querySelector('.bob-button-wrapper');
+    console.log('xxx boyer,', boyero);
+    const buttonWrapper$ = card.element.querySelector('.filmaffinity-addon');
     const div$ = document.createElement('div');
     div$.classList.add('nf-svg-button-wrapper');
     div$.classList.add('filmaffinity-boyero');
@@ -125,17 +51,37 @@ export class FaNetflixDecorator {
       </a>
       <span class="filmaffinity-boyero__tooltip nf-svg-button-tooltip" role="status" aria-live="assertive">${boyero.content}</span>
     `;
-    buttonWrapper$.insertBefore(div$, buttonWrapper$.firstChild);
+    buttonWrapper$.appendChild(div$, buttonWrapper$.firstChild);
   }
 
   _createElement(details) {
     const div$ = document.createElement('div');
     div$.classList.add('filmaffinity-addon');
+    let ratings = '';
+    if (details.reviewSummary) {
+      let summary = details.reviewSummary;
+      ratings = `
+        <div class="filmaffinity-ratings">
+          ${summary.positive.count > 0
+            ? `<div class="filmaffinity-rating filmaffinity-rating--positive" style="width: ${summary.positive.ratio * 100}%"></div>`
+            : ''}
+          ${summary.neutral.count > 0
+            ? `<div class="filmaffinity-rating filmaffinity-rating--neutral" style="width: ${summary.neutral.ratio * 100}%"></div>`
+            : ''}
+          ${summary.negative.count > 0
+            ? `<div class="filmaffinity-rating filmaffinity-rating--negative" style="width: ${summary.negative.ratio * 100}%"></div>`
+            : ''}
+        </div>
+      `
+    }
     div$.innerHTML = `
-      <a href="${details.href}" target="_blank">
-        <span class="filmaffinity-addon__label">Filmaffinity</span>
-        <span class="filmaffinity-addon__rating">${details.rating}</span>
-      </a>
+      <div class="filmaffinity-wrapper">
+        <a href="${details.href}" target="_blank">
+          <span class="filmaffinity-addon__label">Filmaffinity</span>
+          <span class="filmaffinity-addon__rating">${details.rating}</span>
+        </a>
+        ${ratings}
+      </div>
     `;
     div$.getElementsByTagName('a')[0].addEventListener('click', e => {
       e.cancelBubble = true;
