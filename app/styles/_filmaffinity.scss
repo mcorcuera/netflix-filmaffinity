@@ -1,3 +1,7 @@
+.is-bob-open .filmaffinity-addon {
+  opacity: 1;
+}
+
 .filmaffinity-addon {
   font-size: 1.2vw;
   padding: 1em;
@@ -8,7 +12,9 @@
   z-index: 10000;
   text-align: right;
   background-image: linear-gradient(to top,rgba(0,0,0,0) 0,rgba(0,0,0,0) 33%,rgba(0,0,0,.85) 100%);
-  animation: fadein 1s;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  animation: fadein 0.7s;
 
   a:hover {
     text-decoration: underline;

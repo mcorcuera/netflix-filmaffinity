@@ -1,24 +1,10 @@
-import {
-  log
-} from './logger';
-
-
-export class FaApi {
-  static getDetails(film) {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({contentScriptQuery: 'FaApi.getDetails', film: film}, resolve)
-    });
-  }
-}
-
 export class FaNetflixDecorator {
-
   constructor() {
     this._cachedDetails = {};
   }
 
   decorate(card) {
-    this._getDetails(card.title)
+    this._getDetails(card.video)
       .then((details) => {
         try {
           this._addFaRating(card, details);
@@ -40,7 +26,6 @@ export class FaNetflixDecorator {
     if (!boyero) {
      return;
     }
-    console.log('xxx boyer,', boyero);
     const buttonWrapper$ = card.element.querySelector('.filmaffinity-addon');
     const div$ = document.createElement('div');
     div$.classList.add('nf-svg-button-wrapper');
@@ -91,7 +76,9 @@ export class FaNetflixDecorator {
     return div$;
   }
 
-  _getDetails(title) {
-    return FaApi.getDetails(title);
+  _getDetails(video) {
+    return new Promise((resolve, _) => {
+      chrome.runtime.sendMessage({contentScriptQuery: 'FaApi.getDetails', video: video}, resolve)
+    });
   }
 }

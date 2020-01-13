@@ -1,6 +1,7 @@
 import { nlToArr } from './utils';
+import { NetflixApi } from './netflix-api';
 
-
+const netflixApi = new NetflixApi();
 export class NetflixDecoratorManager {
   constructor() {
     this._cardDecorators = [];
@@ -41,7 +42,10 @@ export class NetflixDecoratorManager {
       this._cardDecorators.forEach(decorator => {
         cards.forEach(card => {
           try {
-            decorator.decorate(card);
+            netflixApi.getVideoDetails(card.id).then(video => {
+              card.video = video;
+              decorator.decorate(card);
+            });
           } catch(e) {
           }
         })
@@ -51,11 +55,10 @@ export class NetflixDecoratorManager {
 
   _createCardObject(card$) {
     const title = card$.querySelector('.bob-title').textContent.trim();
-    const watchedTitle$ = card$.querySelector('.watched-title');
-    const watchedTitle = watchedTitle$ ? watchedTitle$.textContent.trim() : undefined;
+    const id = parseInt(card$.querySelector('.bob-jaw-hitzone').href.split('/').reverse()[0]);
     return {
+      id,
       title,
-      watchedTitle,
       element: card$,
     };
   }
