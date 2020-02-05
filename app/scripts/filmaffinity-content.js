@@ -16,7 +16,8 @@ export class FaNetflixDecorator {
   }
 
   _addFaRating(card, details) {
-      const overlay$ = card.element.querySelector('.bob-overlay > .bob-play-hitzone');
+      const overlay$ = card.element.querySelector('.bob-overlay > .bob-play-hitzone')
+        || card.element.querySelector('.bob-overlay');
       const addon$ = this._createElement(details);
       overlay$.insertBefore(addon$, overlay$.firstChild);
   }

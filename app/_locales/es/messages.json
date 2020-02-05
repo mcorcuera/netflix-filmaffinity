@@ -1,14 +1,14 @@
 {
   "appName": {
-    "message": "Filmaffinity en Netflix",
+    "message": "Filmaffinity on Netflix",
     "description": "The name of the application"
   },
   "appShortName": {
-    "message": "Filmaffinity en Netflix",
+    "message": "Filmaffinity on Netflix",
     "description": "The short_name (maximum of 12 characters recommended) is a short version of the app's name."
   },
   "appDescription": {
-    "message": "Ve las puntuaciones de Filmaffinity directamente en Netflix",
+    "message": "This extension shows filmaffitniy.es ratings on Nerflix",
     "description": "The description of the application"
   }
 }

@@ -55,12 +55,12 @@ export class FaApi {
   }
 
   _getFilmFromResults(video, results) {
-    const sameTypeResults = results.filter(r => r.type == video.type);
+    const eligibleResults = results.filter(r => r.type == video.type && r.releaseYear === video.releaseYear);
     const normalizedFilmName = video.title.toLowerCase();
-    const exactMatch = sameTypeResults.find(v => v.title.trim().toLowerCase() == normalizedFilmName);
+    const exactMatch = eligibleResults.find(v => v.title.trim().toLowerCase() == normalizedFilmName);
 
     if (!exactMatch) {
-      return sameTypeResults[0];
+      return eligibleResults[0];
     }
 
     return exactMatch;
